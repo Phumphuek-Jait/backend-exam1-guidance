@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Midterm Express Exam (Starter)",
+    "description": "Starter requests for the midterm. Set collection variables and replace example bodies and Read 3 URL using the actual exam specification.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "studentId", "value": "REPLACE_WITH_STUDENT_ID" },
+    { "key": "resource", "value": "REPLACE_WITH_RESOURCE" },
+    { "key": "id", "value": "REPLACE_WITH_EXISTING_OR_CREATED_ID" }
+  ],
+  "item": [
+    {
+      "name": "01 - Read list (pagination)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}?page=1&limit=10",
+        "description": "Change page/limit to values and query keys required by the exam."
+      }
+    },
+    {
+      "name": "02 - Read detail",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}/{{id}}"
+      }
+    },
+    {
+      "name": "03 - Create",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"REPLACE_FIELD\": \"REPLACE_VALUE\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}",
+        "description": "Replace the example JSON with the exact request DTO. Save returned ID to the id variable."
+      }
+    },
+    {
+      "name": "04 - Read 3 (edit URL per exam)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/{{studentId}}/REPLACE_WITH_READ3_PATH",
+        "description": "The third Read endpoint is unknown until the exam prompt is provided. Edit URL/query to match it."
+      }
+    },
+    {
+      "name": "05 - Update",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"REPLACE_FIELD\": \"REPLACE_UPDATED_VALUE\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}/{{id}}"
+      }
+    },
+    {
+      "name": "06 - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}/{{id}}",
+        "description": "Run last; successful 204 response should have no body."
+      }
+    },
+    {
+      "name": "Error - Not found",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}/999999"
+      }
+    },
+    {
+      "name": "Error - Invalid JSON",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{broken-json",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}"
+      }
+    },
+    {
+      "name": "Error - Invalid pagination",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/{{studentId}}/{{resource}}?page=0&limit=abc",
+        "description": "Expected 400 only when pagination middleware is configured with invalid='error'."
+      }
+    }
+  ]
+}
