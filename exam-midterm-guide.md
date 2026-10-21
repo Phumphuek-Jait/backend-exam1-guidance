@@ -55,7 +55,7 @@ src/
 | `src/configs-$id/db-config.js` | คง `host: localhost`, `user: root`, `password: mysql@sit`; เปลี่ยนเฉพาะ database ตามโจทย์ และคงชื่อ export `db` | ค่าการเชื่อมต่อที่ผู้สอนให้ |
 | `src/routes-$id/exam-route.js` | path/method ของแต่ละข้อ; param name; ชื่อ query; ส่ง `id` และ `req.body` ให้ service; DTO view; status code และ response envelope | รายการ endpoint, request/response และ status |
 | `src/services-$id/exam-service.js` | business rules; วิธีจัดการ `null` จาก repo; เรียก mapper สำหรับ Read ที่ต้องแปลง DTO; อย่าเปลี่ยนชื่อ methods หลัก | เงื่อนไขการทำงานของโจทย์ |
-| `src/repositories-$id/exam-repository.js` | `TABLE_NAME`, `PRIMARY_KEY`, `BUSINESS_KEY`; SQL columns/joins/filters; key ที่ใช้ค้น record หลัง insert; COUNT query ให้ใช้ filter เดียวกับ list | SQL schema และเงื่อนไขค้นหา |
+| `src/repositories-$id/exam-repository.js` | `TABLE_NAME`, `PRIMARY_KEY`, `ENTITY_NAME` และ SQL constants ด้านบนไฟล์; columns/joins/filters; COUNT query ให้ใช้ filter เดียวกับ list | SQL schema และเงื่อนไขค้นหา |
 | `src/mappers-$id/exam-entity-dto-mapper.js` | ทุก field ใน `toSummaryDTO` และ `toDetailDTO`; map ชื่อ DB → ชื่อ API; แปลงชนิดข้อมูลเมื่อจำเป็น | ตัวอย่าง JSON response/DTO |
 | `src/mappers-$id/exam-api-response.js` | โครง success/error envelope, pagination key names, timestamp และ status behavior; 204 ต้องไม่มี body | รูปแบบ response ที่โจทย์หรือ grader ระบุ |
 | `src/middlewares-$id/exam-pagination-middleware.js` | ชื่อ query keys, default page/limit, กรณีส่งไม่ครบหรือค่าผิด และรูปแบบ 400 หากโจทย์บังคับ; helper นี้ไม่มี min/max cap | ข้อกำหนด pagination |
@@ -67,7 +67,7 @@ src/
 - `REPLACE_WITH_RESOURCE` → resource segment เช่น `products` (ไม่ใส่ `/api/:id` ซ้ำ เพราะ app ประกอบ base path ให้แล้ว).
 - `table-name` → ชื่อตารางจริง.
 - `primaryKey` → ชื่อ primary key จริง โดยรักษาตัวพิมพ์เล็ก/ใหญ่ตาม schema.
-- `productLine` ใน `BUSINESS_KEY` → field/key ที่ใช้หาแถวใหม่หลัง insert เมื่อ PK ไม่ใช่ auto increment.
+- `PRIMARY_KEY` → ชื่อคอลัมน์ PK; ถ้า PK ไม่ใช่ auto increment ให้ส่ง PK ใน `data` เพื่อให้ `create()` ใช้ค้น record หลัง insert.
 - `productCode`, `productName`, `productScale`, `MSRP`, `buyPrice` ใน mapper → field จริงและชื่อ DTO ตาม response specification.
 
 ถ้าโจทย์มี Read 3 แบบ ให้สร้าง route สำหรับทั้งสามแบบตาม path จริง แล้วต่อแต่ละ route เข้ากับ service/repository ที่เหมาะสม เช่น list, detail, filter หรือ search; อย่าสมมติว่า Read ทั้งสามข้อเป็น list/detail แบบใดแบบหนึ่งก่อนเห็นโจทย์
@@ -173,6 +173,7 @@ src/
 - pagination นับ total ถูกต้อง; page size ไม่มีการ cap.
 - summary/detail field names และ casing ตรงตัวอย่าง.
 - error handler mount หลัง routes; query values ใช้ bind parameters; dynamic identifiers ต้อง whitelist.
+
 
 
 

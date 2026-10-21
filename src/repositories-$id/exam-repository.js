@@ -1,61 +1,99 @@
 import db from '../configs-$id/db-config.js';
 
-// [แก้ตาม SQL] ชื่อตาราง, PK และ business key ต้องตรง schema จริง
+// ============================================================
+// [แก้ส่วนนี้ตาม schema ของข้อสอบ]
+// ============================================================
 const TABLE_NAME = 'table-name';
 const PRIMARY_KEY = 'primaryKey';
-const BUSINESS_KEY = 'productLine';
+const ENTITY_NAME = 'Entity';
+
+// ============================================================
+// SQL statements — แก้ query ทั้งหมดไว้รวมกันตรงส่วนนี้
+// ============================================================
+const COUNT_ALL_SQL = `
+  SELECT COUNT(*) AS totalItems
+  FROM ${TABLE_NAME}
+`;
+
+const FIND_ALL_SQL = `
+  SELECT *
+  FROM ${TABLE_NAME}
+`;
+
+const FIND_ALL_WITH_PAGE_SQL = `
+  ${FIND_ALL_SQL}
+  LIMIT ? OFFSET ?
+`;
+
+const FIND_ONE_SQL = `
+  SELECT *
+  FROM ${TABLE_NAME}
+  WHERE ${PRIMARY_KEY} = ?
+`;
+
+const CREATE_SQL = `
+  INSERT INTO ${TABLE_NAME}
+  SET ?
+`;
+
+const UPDATE_SQL = `
+  UPDATE ${TABLE_NAME}
+  SET ?
+  WHERE ${PRIMARY_KEY} = ?
+`;
+
+const REMOVE_SQL = `
+  DELETE FROM ${TABLE_NAME}
+  WHERE ${PRIMARY_KEY} = ?
+`;
+
+// ============================================================
+// Repository methods — ชื่อ method คงตาม template เดิม
+// ============================================================
+async function countAll() {
+  const [[{ totalItems }]] = await db.query(COUNT_ALL_SQL);
+  return Number(totalItems);
+}
 
 export async function findAll(pagination = null) {
   if (!pagination) {
-    const [rows] = await db.query(`SELECT * FROM ${TABLE_NAME}`);
+    const [rows] = await db.query(FIND_ALL_SQL);
     return rows;
   }
 
   const { limit, offset } = pagination;
-  const [[{ totalItems }]] = await db.query(
-    `SELECT COUNT(*) AS totalItems FROM ${TABLE_NAME}`,
-  );
-  const [rows] = await db.query(
-    `SELECT * FROM ${TABLE_NAME} LIMIT ? OFFSET ?`,
-    [limit, offset],
-  );
+  const [rows] = await db.query(FIND_ALL_WITH_PAGE_SQL, [limit, offset]);
 
-  // totalItems ต้องเป็นยอดทั้งหมด ไม่ใช่จำนวนแถวในหน้าปัจจุบัน
-  rows.totalItems = Number(totalItems);
+  // เก็บจำนวนทั้งหมดไว้ให้ mapper/response สร้าง pagination metadata
+  rows.totalItems = await countAll();
   return rows;
 }
 
 export async function findOne(id) {
-  const [rows] = await db.query(
-    `SELECT * FROM ${TABLE_NAME} WHERE ${PRIMARY_KEY} = ?`,
-    [id],
-  );
+  const [rows] = await db.query(FIND_ONE_SQL, [id]);
   return rows[0] ?? null;
 }
 
 export async function create(data) {
-  const [result] = await db.query(`INSERT INTO ${TABLE_NAME} SET ?`, [data]);
-  // [แก้ถ้า PK ไม่ auto increment] เลือก key ที่ repo.findOne ใช้ค้นหา
-  const id = data[PRIMARY_KEY] ?? data[BUSINESS_KEY] ?? result.insertId;
+  const [result] = await db.query(CREATE_SQL, [data]);
+
+  // ใช้ PK ที่ส่งมา ถ้าไม่มีให้ใช้ auto-increment insertId
+  const id = data[PRIMARY_KEY] ?? result.insertId;
   return findOne(id);
 }
 
 export async function update(id, data) {
-  if (!(await findOne(id))) return null;
+  const existing = await findOne(id);
+  if (!existing) return null;
 
-  await db.query(
-    `UPDATE ${TABLE_NAME} SET ? WHERE ${PRIMARY_KEY} = ?`,
-    [data, id],
-  );
+  await db.query(UPDATE_SQL, [data, id]);
   return findOne(id);
 }
 
 export async function remove(id) {
-  if (!(await findOne(id))) return false;
+  const existing = await findOne(id);
+  if (!existing) return false;
 
-  const [result] = await db.query(
-    `DELETE FROM ${TABLE_NAME} WHERE ${PRIMARY_KEY} = ?`,
-    [id],
-  );
+  const [result] = await db.query(REMOVE_SQL, [id]);
   return result.affectedRows > 0;
 }
