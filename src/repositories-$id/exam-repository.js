@@ -1,7 +1,7 @@
 import db from '../configs-$id/db-config.js';
 
 // ============================================================
-// [แก้ส่วนนี้ตาม schema ของข้อสอบ]
+// [แก้ส่วนนี้ตาม schema ของ table นี้; ทำ repository แยกอีกไฟล์สำหรับ table อื่น]
 // ============================================================
 const TABLE_NAME = 'table-name';
 const PRIMARY_KEY = 'primaryKey';
@@ -97,3 +97,4 @@ export async function remove(id) {
   const [result] = await db.query(REMOVE_SQL, [id]);
   return result.affectedRows > 0;
 }
+

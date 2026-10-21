@@ -45,6 +45,23 @@ src/
 9. **ทดสอบทันทีทีละ endpoint:** เริ่มจาก GET, แล้ว POST → GET record ที่สร้าง → PUT → GET ตรวจค่าหลังแก้ → DELETE. ทดสอบเคส 404/duplicate/invalid input เมื่อมีเวลา.
 10. **ตรวจส่งงาน:** server start ได้, routes ตอบได้, response keys/status ตรง, ไม่มี body ที่ 204, ส่ง project ที่ถูกต้องผ่าน LEB2.
 
+## เปลี่ยนชื่อไฟล์แล้วต้องแก้ import ตรงไหน
+
+แนวทางง่ายสุดคือคัดลอกไฟล์ `exam-*` ไปเป็นชื่อไฟล์จริง แล้วแก้ import ในไฟล์ที่เรียกมันตามตารางนี้ ชื่อไฟล์กับชื่อ method เป็นคนละเรื่อง: เปลี่ยนชื่อไฟล์ได้ แต่คง method names ตาม template ไว้
+
+| เปลี่ยนชื่อไฟล์ | ต้องไปแก้ import ที่ |
+|---|---|
+| `src/exam-app.js` → `src/app.js` | จุดรัน server เช่น `node src/app.js`; import ภายใน app ต้องชี้ชื่อ route/middleware จริง |
+| `routes-$id/exam-route.js` → `routes-$id/product-route.js` | `app.js` เปลี่ยน import และตรวจ `app.use(...)` ที่ mount router |
+| `services-$id/exam-service.js` → `services-$id/product-service.js` | `product-route.js` เปลี่ยน import service |
+| `repositories-$id/exam-repository.js` → `repositories-$id/product-repository.js` | `product-service.js` เปลี่ยน import repository |
+| `mappers-$id/exam-entity-dto-mapper.js` → `mappers-$id/product-mapper.js` | `product-service.js` เปลี่ยน import mapper; ชื่อ class/default export ต้องตรงกัน |
+| `mappers-$id/exam-api-response.js` → `mappers-$id/api-response.js` | ทุก route ที่ใช้ `apiResponse` เปลี่ยน import |
+| `middlewares-$id/exam-pagination-middleware.js` → `middlewares-$id/pagination-middleware.js` | `app.js` เปลี่ยน import `queryParser` |
+| `middlewares-$id/exam-error-handler.js` → `middlewares-$id/error-handler.js` | `app.js` เปลี่ยน imports `notFoundHandler/errorHandler`; `service.js` เปลี่ยน import `AppError` |
+| `configs-$id/db-config.js` | ถ้าเปลี่ยนชื่อ ให้ทุก repository เปลี่ยน import; ปกติคงชื่อนี้ไว้แล้วเปลี่ยนแค่ database name |
+
+**กฎตรวจเร็ว:** เปิดไฟล์ที่ถูก rename แล้วค้นคำว่า `from '../` หรือ `from './`; ทุก path ต้องชี้ไปยังไฟล์ที่มีอยู่จริง รวมถึงตัวสะกด `.js`. ถ้าเปลี่ยนชื่อโฟลเดอร์ `routes-$id`, `services-$id` ฯลฯ ด้วย ต้องแก้ path ของ import ทุกจุดที่อ้างถึงโฟลเดอร์นั้นด้วย; ปกติไม่จำเป็นต้องเปลี่ยนชื่อโฟลเดอร์ที่ผู้สอนให้มา.
 ## เมื่อได้โจทย์แล้ว ต้องแก้อะไรในไฟล์ไหน
 
 ใช้รายการนี้ไล่แทน placeholder ตามโจทย์และ SQL จริง อย่าแก้ค่าตัวอย่างโดยเดา หากโจทย์กำหนด response/status ไว้ให้ยึดโจทย์ก่อนตัวอย่างใน helper
@@ -72,6 +89,35 @@ src/
 
 ถ้าโจทย์มี Read 3 แบบ ให้สร้าง route สำหรับทั้งสามแบบตาม path จริง แล้วต่อแต่ละ route เข้ากับ service/repository ที่เหมาะสม เช่น list, detail, filter หรือ search; อย่าสมมติว่า Read ทั้งสามข้อเป็น list/detail แบบใดแบบหนึ่งก่อนเห็นโจทย์
 
+### ถ้าโจทย์ใช้หลาย table/resource
+
+helper `exam-repository.js` เป็นแม่แบบสำหรับ **หนึ่ง table ต่อหนึ่ง repository**; อย่าแก้ `TABLE_NAME` สลับไปมาระหว่างหลาย route เพราะจะทำให้ทุก service ชี้ table เดียวกัน
+
+ให้แยกไฟล์ต่อ resource เช่น:
+
+```text
+routes-$id/product-route.js
+services-$id/product-service.js
+repositories-$id/product-repository.js
+mappers-$id/product-mapper.js
+
+routes-$id/brand-route.js
+services-$id/brand-service.js
+repositories-$id/brand-repository.js
+mappers-$id/brand-mapper.js
+```
+
+แต่ละ route import service ของตัวเอง; แต่ละ service import repository/mapper ของ entity นั้น. ทำสำเนา `exam-repository.js` เป็น repository แยกต่อ table แล้วแก้ SQL constants ด้านบนของแต่ละไฟล์ให้ตรง table/PK ของตนเอง. `app.js` import router ทุก resource และ mount แต่ละ base path แยกกัน:
+
+```js
+import productRouter from './routes-$id/product-route.js';
+import brandRouter from './routes-$id/brand-route.js';
+
+app.use(`/api/${STUDENT_ID}/products`, productRouter);
+app.use(`/api/${STUDENT_ID}/brands`, brandRouter);
+```
+
+ใช้ `db-config.js`, `queryParser`, `errorHandler`, `notFoundHandler` และ `apiResponse` ร่วมกันได้. ถ้าต้อง join ข้อมูล เช่น product พร้อม brand name ให้เพิ่ม JOIN ใน query ของ repository ที่ตอบ resource นั้น และให้ COUNT query นับ scope เดียวกัน; ถ้าโจทย์มี CRUD ของ brand ด้วย ก็ยังมี `brand-repository.js` แยกต่างหาก.
 ## ชื่อ methods ที่ควรรักษา
 
 | Layer | ชื่อ method ตาม template |
@@ -173,6 +219,7 @@ src/
 - pagination นับ total ถูกต้อง; page size ไม่มีการ cap.
 - summary/detail field names และ casing ตรงตัวอย่าง.
 - error handler mount หลัง routes; query values ใช้ bind parameters; dynamic identifiers ต้อง whitelist.
+
 
 
 

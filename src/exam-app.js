@@ -10,7 +10,7 @@ const STUDENT_ID = 'REPLACE_WITH_STUDENT_ID';
 app.use(express.json());
 app.use(queryParser());
 
-// [แก้ base path] ใช้ prefix ตามข้อกำหนดในโจทย์จริง
+// [แก้ base path] ใช้ prefix ตามข้อกำหนดในโจทย์จริง; ถ้ามีหลาย resource ให้ import และ app.use router แยกแต่ละตัว
 app.use(`/api/${STUDENT_ID}/REPLACE_WITH_RESOURCE`, router);
 
 // Error handlers ต้องอยู่หลัง routes และก่อน app.listen
@@ -20,3 +20,4 @@ app.use(errorHandler);
 app.listen(3000, () => {
   console.log('Server listening on port 3000');
 });
+
